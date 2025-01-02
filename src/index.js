@@ -11,8 +11,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/get-report", (req, res) => {
-  const status = "pending";
-  let totalCount = 0;
+  let status = "pending";
   let dataCount = 12;
   let skip = 0;
 
@@ -39,24 +38,34 @@ app.get("/get-report", (req, res) => {
         let hasAdvertising = false;
         let hasMedia = false;
 
-        agency.agencyService.foreach((item) => {
+        agency.agencyService.forEach((item) => {
           if (item.service.serviceGroup.name === agencies[0])
             hasAdvertising = true;
 
-          if (item.service.serviceGroup.name === agencies[1]) 
-            hasMedia = true;
+          if (item.service.serviceGroup.name === agencies[1]) hasMedia = true;
         });
 
-        console.log(hasAdvertising, hasMedia);
-        if (hasAdvertising && hasMedia) agencyCount[country]++;
+        if (hasAdvertising && hasMedia) {
+          if (agencyCount[country] === undefined) agencyCount["Others"]++;
+          else agencyCount[country]++;
+        }
+
+        hasAdvertising = false;
+        hasMedia = false;
       });
 
-      res.json(agencyCount);
+      if (skip + dataCount >= totalCount) {
+        status = "done";
+        res.json(agencyCount);
+        return;
+      }
+
+      skip += dataCount;
+      getAgencyData(skip);
     } catch (error) {
       res.status(500).send("Error fetching data");
     }
   }
 
   if (status === "pending") getAgencyData(skip);
-  else res.json(agencyCount);
 });
